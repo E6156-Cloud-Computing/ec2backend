@@ -82,7 +82,7 @@ def create_tenant():
             cur = conn.cursor()
             cur.execute('''
                 INSERT INTO tenants (email, gender, building_name, room_name, phone_number,rent, 
-                        lease_start_date, lease_end_date, indentity)
+                        lease_start_date, lease_end_date, identity)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''', (email, gender, building_name, room_name, phone_number,rent, 
                   lease_start_date, lease_end_date, identity,))
