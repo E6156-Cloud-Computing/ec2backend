@@ -105,7 +105,7 @@ def get_tenant_by_id(email):
             row = cursor.fetchone()
 
             if row is None:
-                return jsonify({'error': 'Tenant not found'}), 404
+                return jsonify({}), 200
 
             # Convert row to dictionary
             tenant = dict(row)
