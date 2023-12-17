@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import requests
 import asyncio
 import aiohttp
@@ -7,7 +8,24 @@ app = Flask(__name__)
 # Add configurations and any necessary initialization here
 
 BUILDING_APP_URL = "http://building-app-ip:port"  
-TENANT_APP_URL = "http://tenant-app-ip:port" 
+TENANT_APP_URL = "https://3.220.219.78:5000" 
+BILLING_APP_URL = "https://54.167.236.204:5001" 
+
+async def fetch_url(session, url, params=None):
+    async with session.get(url, params=params,ssl=False) as response:
+        return await response.json()
+
+async def get_data_from_urls(url1, url2, email):
+    params = {'email': email}
+    async with aiohttp.ClientSession() as session:
+        task1 = asyncio.create_task(fetch_url(session, url1, params))
+        task2 = asyncio.create_task(fetch_url(session, url2))  # No params needed for url2
+
+        response1, response2 = await asyncio.gather(task1, task2)
+        # 合并两个响应
+        merged_response = {**response1, **response2}
+        return merged_response
+
 
 @app.route('/add_new_tenant', methods=['POST'])
 def add_new_tenant():
@@ -36,7 +54,7 @@ def add_new_tenant():
         return jsonify({'error': f'Building app request failed: {str(e)}'}), 500
 
 @app.route('/update_tenant/<email>', methods=['POST'])
-def add_new_tenant(email):
+def update_tenant(email):
     data = request.json
     room_id = data.get("room_id")
     try:
@@ -61,4 +79,21 @@ def add_new_tenant(email):
     except requests.RequestException as e:
         return jsonify({'error': f'Building app request failed: {str(e)}'}), 500
 
-app.run(port=5002, debug=True)
+@app.route('/fetch_data/<email>')
+def fetch_data(email):
+    url1 = f"{BILLING_APP_URL}/api/billing/get_balance"
+    url2 = f"{TENANT_APP_URL}/api/Tenant/{email}"
+
+    try:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        merged_response = loop.run_until_complete(get_data_from_urls(url1, url2, email))
+        loop.close()
+    except Exception as e:
+        return jsonify({'error': f'Fetch request failed: {str(e)}'}), 500
+
+    
+    return jsonify(merged_response)
+if __name__ == '__main__':
+    CORS(app)
+    app.run(host='0.0.0.0',port=5000,ssl_context='adhoc',debug=True)
