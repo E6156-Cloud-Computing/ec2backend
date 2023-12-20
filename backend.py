@@ -1,8 +1,9 @@
 from flask import Flask, request, jsonify
 import sqlite3
 import re
-from datetime import datetime
 from flask_cors import CORS
+from datetime import datetime, timedelta
+import jwt
 
 def is_valid_email(email):
     """ check email address"""
@@ -29,6 +30,18 @@ def init_db():
         )
     ''')
     conn.close()
+
+
+@app.route('/token/<email>', methods=['GET'])
+def generate_token(email):
+    SECRET_KEY = '123456'
+    token = jwt.encode({
+        'sub': email,
+        'iat': datetime.utcnow(),
+        'exp': datetime.utcnow() + timedelta(minutes=60)  # Token expires in 60 minutes
+    }, SECRET_KEY, algorithm='HS256')   
+    return jsonify(token=token), 200
+
 
 @app.route('/api/Tenant', methods=['GET'])
 def get_all_tenants():
@@ -203,4 +216,4 @@ def get_tenants_in_building(building_name):
 
 if __name__ == '__main__':
     init_db()
-    app.run(debug=True)
+    app.run(host='0.0.0.0',port='5000',ssl_context='adhoc')
