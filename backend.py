@@ -1,9 +1,9 @@
 from flask import Flask, request, jsonify
 import sqlite3
 import re
+from flask_cors import CORS
 from datetime import datetime, timedelta
 import jwt
-
 
 def is_valid_email(email):
     """ check email address"""
@@ -11,6 +11,7 @@ def is_valid_email(email):
     return re.match(email_regex, email) is not None
 
 app = Flask(__name__)
+CORS(app)
 
 #date like YYYY-MM-DD
 def init_db():
