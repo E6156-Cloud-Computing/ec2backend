@@ -7,7 +7,7 @@ app = Flask(__name__)
 
 # Add configurations and any necessary initialization here
 
-BUILDING_APP_URL = "http://building-app-ip:port"  
+BUILDING_APP_URL = "http://18.204.252.196"  
 TENANT_APP_URL = "https://3.220.219.78:5000" 
 BILLING_APP_URL = "https://54.167.236.204:5001" 
 
@@ -31,22 +31,21 @@ async def get_data_from_urls(url1, url2, email):
 def add_new_tenant():
     data = request.json
     room_id = data.get("room_id")
+    building_name=data.get("building_name")
     try:
-        building_room_url = f"{BUILDING_APP_URL}/check_room/{room_id}"
+        building_room_url = f"{BUILDING_APP_URL}/api/building/{building_name}/check_room/{room_id}"
         room_response = requests.get(building_room_url)
         if room_response.status_code == 200:
             # Room is available, extract building name and room number
             room_info = room_response.json()
             building_name = room_info.get('building_name')
             room_number = room_info.get('room_number')
-
-            # Add building name and room number to tenant data
-            data['building_name'] = building_name
+            #data['building_name'] = building_name
             data['room_name'] = room_number
 
             # Proceed to create a tenant in the tenant app
             tenant_app_url = f"{TENANT_APP_URL}/api/Tenant"
-            tenant_response = requests.post(tenant_app_url, json=data)
+            tenant_response = requests.post(tenant_app_url, json=data,verify=False)
             return jsonify(tenant_response.json()), tenant_response.status_code
         else:
             return jsonify({'error': 'Room not available or does not exist'}), room_response.status_code
@@ -57,8 +56,9 @@ def add_new_tenant():
 def update_tenant(email):
     data = request.json
     room_id = data.get("room_id")
+    building_name=data.get("building_name")
     try:
-        building_room_url = f"{BUILDING_APP_URL}/check_room/{room_id}"
+        building_room_url = f"{BUILDING_APP_URL}/api/building/{building_name}/check_room/{room_id}"
         room_response = requests.get(building_room_url)
         if room_response.status_code == 200:
             # Room is available, extract building name and room number
@@ -67,7 +67,7 @@ def update_tenant(email):
             room_number = room_info.get('room_number')
 
             # Add building name and room number to tenant data
-            data['building_name'] = building_name
+            #data['building_name'] = building_name
             data['room_name'] = room_number
 
             # Proceed to create a tenant in the tenant app
